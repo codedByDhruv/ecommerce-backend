@@ -16,8 +16,38 @@ exports.create = async (req, res) => {
 };
 
 exports.getAll = async (req, res) => {
-  const products = await Product.find().populate("category");
-  res.json(products);
+  try {
+    // Get page and limit from query params, with defaults
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+
+    // Calculate how many documents to skip
+    const skip = (page - 1) * limit;
+
+    // Get total count of products for pagination metadata
+    const totalItems = await Product.countDocuments();
+
+    // Fetch products with pagination and populate category
+    const products = await Product.find()
+      .populate("category")
+      .skip(skip)
+      .limit(limit);
+
+    // Calculate total pages
+    const totalPages = Math.ceil(totalItems / limit);
+
+    // Send paginated response with metadata
+    res.json({
+      data: products,
+      page,
+      limit,
+      totalPages,
+      totalItems,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server Error" });
+  }
 };
 
 exports.getOne = async (req, res) => {
