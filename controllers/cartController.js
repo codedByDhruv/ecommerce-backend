@@ -22,8 +22,29 @@ exports.addToCart = async (req, res) => {
 };
 
 exports.getCart = async (req, res) => {
-  const cart = await Cart.findOne({ user: req.user._id }).populate("items.product");
-  res.json(cart);
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const cart = await Cart.findOne({ user: req.user._id }).populate("items.product");
+
+    if (!cart) return res.json({ items: [], totalItems: 0 });
+
+    const totalItems = cart.items.length;
+    const paginatedItems = cart.items.slice(skip, skip + limit);
+
+    res.json({
+      items: paginatedItems,
+      totalItems,
+      page,
+      limit,
+      totalPages: Math.ceil(totalItems / limit),
+    });
+  } catch (err) {
+    console.error("Failed to fetch cart:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 };
 
 exports.removeFromCart = async (req, res) => {

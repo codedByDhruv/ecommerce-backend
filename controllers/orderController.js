@@ -39,13 +39,58 @@ exports.placeOrder = async (req, res) => {
 
   res.status(201).json({ message: "Order placed successfully", order });
 };
-
 exports.getMyOrders = async (req, res) => {
-  const orders = await Order.find({ user: req.user._id }).populate("products.product");
-  res.json(orders);
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    const totalOrders = await Order.countDocuments({ user: req.user._id });
+
+    const orders = await Order.find({ user: req.user._id })
+      .sort({ createdAt: -1 }) // optional: latest first
+      .skip(skip)
+      .limit(limit)
+      .populate("products.product");
+
+    res.json({
+      orders,
+      totalOrders,
+      page,
+      limit,
+      totalPages: Math.ceil(totalOrders / limit),
+    });
+  } catch (err) {
+    console.error("Error fetching user orders:", err);
+    res.status(500).json({ error: "Failed to fetch orders" });
+  }
 };
 
 exports.getAllOrders = async (req, res) => {
-  const orders = await Order.find().populate("user").populate("products.product");
-  res.json(orders);
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    const totalOrders = await Order.countDocuments();
+
+    const orders = await Order.find()
+      .sort({ createdAt: -1 }) // Optional: sort newest first
+      .skip(skip)
+      .limit(limit)
+      .populate("user")
+      .populate("products.product");
+
+    res.json({
+      orders,
+      totalOrders,
+      page,
+      limit,
+      totalPages: Math.ceil(totalOrders / limit),
+    });
+  } catch (err) {
+    console.error("Error fetching all orders:", err);
+    res.status(500).json({ error: "Failed to fetch orders" });
+  }
 };
+
