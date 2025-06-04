@@ -47,6 +47,36 @@ exports.getCart = async (req, res) => {
   }
 };
 
+exports.updateCart = async (req, res) => {
+  const userId = req.user._id;
+  const { productId, quantity } = req.body;
+
+  if (!productId || typeof quantity !== 'number') {
+    return res.status(400).json({ message: 'Product ID and quantity are required' });
+  }
+
+  try {
+    const cart = await Cart.findOne({ user: userId });
+    if (!cart) {
+      return res.status(404).json({ message: 'Cart not found' });
+    }
+
+    const index = cart.items.findIndex(item => item.product.toString() === productId);
+
+    if (index === -1) {
+      return res.status(404).json({ message: 'Product not found in cart' });
+    }
+
+    cart.items[index].quantity = quantity;
+
+    await cart.save();
+
+    res.json({ message: 'Cart updated successfully', cart });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error });
+  }
+};
+
 exports.removeFromCart = async (req, res) => {
   const { productId } = req.body;
   const cart = await Cart.findOne({ user: req.user._id });
