@@ -37,6 +37,27 @@ exports.getAll = async (req, res) => {
   }
 };
 
+exports.getFilteredCategories = async (req, res) => {
+  try {
+    const { category } = req.query;
+
+    // If category is provided, use regex for partial and case-insensitive match
+    const filter = category
+      ? { name: { $regex: category, $options: "i" } }
+      : {};
+
+    const categories = await Category.find(filter);
+
+    res.json({
+      data: categories,
+      totalItems: categories.length,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
 exports.update = async (req, res) => {
   const { id } = req.params;
   const { name } = req.body;
