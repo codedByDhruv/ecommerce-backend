@@ -2,12 +2,13 @@
 const express = require("express");
 const router = express.Router();
 const authController = require("../controllers/authController");
-const { protect } = require("../middlewares/authMiddleware");
+const { protect, adminOnly } = require("../middlewares/authMiddleware");
 
 router.post("/register", authController.register);
 router.post("/login", authController.login);
 router.post("/send-otp", authController.sendOtp);
 router.post("/reset-password", authController.resetPassword);
 router.post("/change-password", protect, authController.changePassword);
+router.get("/all", protect, adminOnly, authController.getAllUsersWithRole);
 
 module.exports = router;

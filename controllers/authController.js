@@ -89,3 +89,35 @@ exports.changePassword = async (req, res) => {
 
   res.json({ message: "Password changed successfully" });
 };
+
+exports.getAllUsersWithRole = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const query = { role: "user" };
+    console.log("Query Params:", { page, limit, skip });
+    
+    const totalUsers = await User.countDocuments(query);
+    console.log("Total Users:", totalUsers);
+
+    const users = await User.find(query, "username email role")
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+
+    console.log("Fetched Users:", users);
+
+    res.status(200).json({
+      success: true,
+      users,
+      page,
+      totalPages: Math.ceil(totalUsers / limit),
+      totalUsers,
+    });
+  } catch (err) {
+    console.error("Error fetching user data:", err);
+    res.status(500).json({ success: false, message: "Failed to get users" });
+  }
+};
