@@ -24,6 +24,7 @@ exports.register = async (req, res) => {
       user: {
         id: user._id,
         role: user.role,
+        username : user.username,
         email: user.email,
       },
     });
@@ -42,7 +43,7 @@ exports.login = async (req, res) => {
     if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
-    res.json({ token, user: { id: user._id, role: user.role, email: user.email } });
+    res.json({ token, user: { id: user._id, role: user.role, username : user.username, email: user.email } });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -119,5 +120,36 @@ exports.getAllUsersWithRole = async (req, res) => {
   } catch (err) {
     console.error("Error fetching user data:", err);
     res.status(500).json({ success: false, message: "Failed to get users" });
+  }
+};
+
+exports.updateProfile = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { username, phone, address } = req.body;
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { username, phone, address },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({
+      message: "Profile updated successfully",
+      user: {
+        _id: updatedUser._id,
+        username: updatedUser.username,
+        email: updatedUser.email,
+        phone: updatedUser.phone,
+        address: updatedUser.address,
+      },
+    });
+  } catch (error) {
+    console.error("Update Profile Error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
