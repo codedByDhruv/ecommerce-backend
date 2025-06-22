@@ -57,13 +57,56 @@ exports.getOne = async (req, res) => {
   res.json(product);
 };
 
+exports.addImage = async (req, res) => {
+  const { id } = req.params;
+  const images = req.files?.map(file => file.path);
+
+  const product = await Product.findById(id);
+  if (!product) return res.status(404).json({ message: "Product not found" });
+
+  product.images.push(...images);
+  await product.save();
+
+  res.json({ message: "Images added", product });
+};
+
+exports.addImage = async (req, res) => {
+  const { id } = req.params;
+  const images = req.files?.map(file => file.path);
+
+  const product = await Product.findById(id);
+  if (!product) return res.status(404).json({ message: "Product not found" });
+
+  product.images.push(...images);
+  await product.save();
+
+  res.json({ message: "Images added", product });
+};
+
+exports.deleteImage = async (req, res) => {
+  const { id } = req.params;
+  const { imageUrl } = req.body; 
+
+  const product = await Product.findById(id);
+  if (!product) return res.status(404).json({ message: "Product not found" });
+
+  product.images = product.images.filter(img => img !== imageUrl);
+  await product.save();
+
+  // Optionally delete file from filesystem
+  const imagePath = path.join(__dirname, "../", imageUrl); // Update path logic if needed
+  fs.unlink(imagePath, err => {
+    if (err) console.warn("Failed to delete image from disk:", err);
+  });
+
+  res.json({ message: "Image deleted", product });
+};
+
 exports.update = async (req, res) => {
   const { id } = req.params;
   const { name, category, sku, description, price, qty } = req.body;
-  const images = req.files?.map(file => file.path);
 
   const updateData = { name, category, sku, description, price, qty };
-  if (images?.length) updateData.images = images;
 
   const product = await Product.findByIdAndUpdate(id, updateData, { new: true });
   res.json(product);
