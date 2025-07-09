@@ -5,6 +5,7 @@ const Product = require("../models/Product");
 exports.placeOrder = async (req, res) => {
   const userId = req.user._id;
   const { shippingAddress } = req.body;
+  const shippingCharges = 60; // 🆕 Fixed shipping fee
 
   const cart = await Cart.findOne({ user: userId }).populate("items.product");
   if (!cart || cart.items.length === 0) {
@@ -16,16 +17,19 @@ exports.placeOrder = async (req, res) => {
     quantity: item.quantity
   }));
 
-  const totalAmount = cart.items.reduce(
+  const productTotal = cart.items.reduce(
     (sum, item) => sum + item.product.price * item.quantity,
     0
   );
+
+  const totalAmount = productTotal + shippingCharges; // 🆕 Add shipping to total
 
   const order = await Order.create({
     user: userId,
     products,
     shippingAddress,
     totalAmount,
+    shippingCharges, // 🆕 Store in DB
   });
 
   // Reduce stock quantity

@@ -13,10 +13,7 @@ router.put("/:id", protect, adminOnly, categoryController.update);
 // 🔒 Delete a category by ID (Admin only)
 router.delete("/:id", protect, adminOnly, categoryController.remove);
 
-// 🟢 Get all categories (Public)
-router.get("/", categoryController.getAll);
-
-// 🟢 Get categories based on filter query (Public)
-router.get("/filter", categoryController.getFilteredCategories);
+// 🟢 Get all categories (Admin only)
+router.get("/", protect, adminOnly, categoryController.getAll);
 
 module.exports = router;
